@@ -2,36 +2,27 @@
 // http://localhost:3000/isolated/exercise/01.js
 
 import * as React from 'react'
-// 🐨 you'll also need to get the fetchPokemon function from ../pokemon:
-import {PokemonDataView} from '../pokemon'
+import {PokemonDataView, fetchPokemon, PokemonErrorBoundary} from '../pokemon'
 
-// 💰 use it like this: fetchPokemon(pokemonName).then(handleSuccess, handleFailure)
+let pokemon
+let pokemonError
 
-// 🐨 create a variable called "pokemon" (using let)
-
-// 💣 delete this now...
-const pokemon = {
-  name: 'TODO',
-  number: 'TODO',
-  attacks: {
-    special: [{name: 'TODO', type: 'TODO', damage: 'TODO'}],
-  },
-  fetchedAt: 'TODO',
-}
-
-// We don't need the app to be mounted to know that we want to fetch the pokemon
-// named "pikachu" so we can go ahead and do that right here.
-// 🐨 assign a pokemonPromise variable to a call to fetchPokemon('pikachu')
-
-// 🐨 when the promise resolves, assign the "pokemon" variable to the resolved value
-// 💰 For example: somePromise.then(resolvedValue => (someValue = resolvedValue))
+const pokemonPromise = fetchPokemon('pikachu').then(
+  pokemonData => (pokemon = pokemonData),
+  error => (pokemonError = error),
+)
 
 function PokemonInfo() {
-  // 🐨 if there's no pokemon yet, then throw the pokemonPromise
-  // 💰 (no, for real. Like: `throw pokemonPromise`)
+  if (pokemonError) {
+    throw pokemonError
+  }
+  if (!pokemon) {
+    throw pokemonPromise
+    // a diferenca entre retornar a promise e jogar ela no throw é que o throw vai ser tratado pelo suspense do react. O suspense vai esperar a promise ser resolvida e só depois vai renderizar o componente.
+    // o bom disso, é que quando a promessa se resolver, esse componente será renderizado novamente, mas dessa vez com o pokemon já carregado.
+    // pokemonPromise faz a chamada para a api e retorna a promessa.
+  }
 
-  // if the code gets it this far, then the pokemon variable is defined and
-  // rendering can continue!
   return (
     <div>
       <div className="pokemon-info__img-wrapper">
@@ -46,8 +37,12 @@ function App() {
   return (
     <div className="pokemon-info-app">
       <div className="pokemon-info">
-        {/* 🐨 Wrap the PokemonInfo component with a React.Suspense component with a fallback */}
-        <PokemonInfo />
+        <PokemonErrorBoundary>
+          {/* O fallback contem o que será mostrado na tela, enquanto a promisse nao retornou nada... ainda */}
+          <React.Suspense fallback={<div>Loading....</div>}>
+            <PokemonInfo />
+          </React.Suspense>
+        </PokemonErrorBoundary>
       </div>
     </div>
   )
