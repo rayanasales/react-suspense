@@ -29,21 +29,30 @@ const SUSPENSE_CONFIG = {
   busyMinDurationMs: 700,
 }
 
-const pokemonResouceCache = {}
-const PokemonResouceCacheContext = React.createContext(getPokemonResource)
+const PokemonResourceCacheContext = React.createContext()
 
-function getPokemonResource(name) {
-  const lowerName = name.toLowerCase()
-  let resource = pokemonResouceCache[lowerName]
-  if (!resource) {
-    resource = createPokemonResource(lowerName)
-    pokemonResouceCache[lowerName] = resource
-  }
-  return resource
+function PokemonCacheProvider({children}) {
+  const cache = React.useRef({}) // this will keep the object stable trough renders
+
+  const getPokemonResource = React.useCallback(name => {
+    const lowerName = name.toLowerCase()
+    let resource = cache.current[lowerName]
+    if (!resource) {
+      resource = createPokemonResource(lowerName)
+      cache.current[lowerName] = resource
+    }
+    return resource
+  }, [])
+
+  return (
+    <PokemonResourceCacheContext.Provider value={getPokemonResource}>
+      {children}
+    </PokemonResourceCacheContext.Provider>
+  )
 }
 
 function usePokemonResourceCache() {
-  return React.useContext(PokemonResouceCacheContext)
+  return React.useContext(PokemonResourceCacheContext)
 }
 
 function createPokemonResource(pokemonName) {
@@ -98,4 +107,12 @@ function App() {
   )
 }
 
-export default App
+function AppWithProvider() {
+  return (
+    <PokemonCacheProvider>
+      <App />
+    </PokemonCacheProvider>
+  )
+}
+
+export default AppWithProvider
