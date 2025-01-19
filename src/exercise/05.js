@@ -7,10 +7,22 @@ import {
   getImageUrlForPokemon,
   PokemonInfoFallback,
   PokemonForm,
-  PokemonDataView,
   PokemonErrorBoundary,
 } from '../pokemon'
 import {createResource} from '../utils'
+
+const PokemonInfo = React.lazy(() =>
+  import('../lazy/pokemon-info-render-as-you-fetch'),
+)
+
+/**
+ * we are doing this because the idea is pre load the page, before we have the data.
+ * the regular scenario is:
+ * 1. load the data entirly
+ * 2. then start fetching the page.
+ * 3. this is a waterfall - stuff depending from another stuff
+ * Solution: preload the page, before you have any data. When the data arrives, you can imediatly display it
+ */
 
 // ❗❗❗❗
 // 🦉 On this one, make sure that you UNCHECK the "Disable cache" checkbox
@@ -36,18 +48,6 @@ function preloadImage(src) {
     img.src = src
     img.onload = () => resolve(src)
   })
-}
-
-function PokemonInfo({pokemonResource}) {
-  const pokemon = pokemonResource.data.read()
-  return (
-    <div>
-      <div className="pokemon-info__img-wrapper">
-        <img src={pokemonResource.image.read()} alt={pokemon.name} />
-      </div>
-      <PokemonDataView pokemon={pokemon} />
-    </div>
-  )
 }
 
 const SUSPENSE_CONFIG = {
